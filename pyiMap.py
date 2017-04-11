@@ -43,19 +43,16 @@ if __name__ == '__main__':
    except:
       print("Default -> Loglevel nicht erkennbar")
       exit(-1)
-      
+   
+   # Logfilename
    try:
       params['LogFile'] = pyiMapConfig['Default']['LogFile']
    except:
       print("Default -> Logfile nicht gesetzt")
       exit(-1)
    
+   logging.basicConfig(filename=".\\"+params['LogFile'], level=logging.DEBUG, format='%(asctime)s %(message)s')
    
+   logging.info("Programm startet")
 
-   
-   
-   
-   
-   
-   
-
+   logging.info("Programm ended")
