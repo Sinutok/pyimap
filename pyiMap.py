@@ -16,7 +16,9 @@ from time import localtime,strftime
 from sys import argv, exit
 import configparser              # Damit mit einer INI gearbeitet werden kann
 import logging                   # LOG-Mechanismus
+import argparse                  # Argumente zur Uebergabe
 import imaplib                   # imap-Zeugs
+
 
 params['DEBUGLEVEL']:int   = 0
 params['LogFile']:str      = ""
@@ -29,6 +31,7 @@ params['IMAPPort']:int     = 0
 # Stellt die Verbindung zum IMAP-Server her
 #
 def connect2imap():
+   print("EMPTY")
    
 
 
@@ -78,7 +81,14 @@ if __name__ == '__main__':
    except:
       print("imap -> port nicht gesetzt")
       exit(-1)
-      
-   connect2IMAP()
+    
+   parser = argparse.ArgumentParser()
+   parser.add_argument("user",help="Username fuer imap")
+   parser.add_argument("password",help="Password fuer imap-User")
+   args = parser.parse_args()
+   
+   print(args.password)
+   print(args.user)
+   #connect2IMAP()
       
    logging.info("Programm ended")
