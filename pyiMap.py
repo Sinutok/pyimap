@@ -16,10 +16,21 @@ from time import localtime,strftime
 from sys import argv, exit
 import configparser              # Damit mit einer INI gearbeitet werden kann
 import logging                   # LOG-Mechanismus
-
+import imaplib                   # imap-Zeugs
 
 params['DEBUGLEVEL']:int   = 0
 params['LogFile']:str      = ""
+params['IMAPServer']:str   = ""
+params['IMAPPort']:int     = 0
+
+# ################################
+# connect2imap
+# 
+# Stellt die Verbindung zum IMAP-Server her
+#
+def connect2imap():
+   
+
 
 # ################################
 # 
@@ -51,8 +62,23 @@ if __name__ == '__main__':
       print("Default -> Logfile nicht gesetzt")
       exit(-1)
    
-   logging.basicConfig(filename=".\\"+params['LogFile'], level=logging.DEBUG, format='%(asctime)s %(message)s')
+   logging.basicConfig(filename=".\\"+params['LogFile'], level=logging.DEBUG, format='%(asctime)s - %(message)s')
    
    logging.info("Programm startet")
+   logging.info("Loglevel: "+params['DEBUGLEVEL'])
+   
+   try:
+      params['IMAPServer'] = pyiMapConfig['imap']['server']
+   except:
+      print("imap -> server nicht gesetzt")
+      exit(-1)
 
+   try:
+      params['IMAPPort'] = pyiMapConfig['imap']['port']
+   except:
+      print("imap -> port nicht gesetzt")
+      exit(-1)
+      
+   connect2IMAP()
+      
    logging.info("Programm ended")
