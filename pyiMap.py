@@ -30,8 +30,23 @@ params['IMAPPort']:int     = 0
 # 
 # Stellt die Verbindung zum IMAP-Server her
 #
-def connect2imap():
-   print("EMPTY")
+def parse_Mailbox(MB):
+   if params['DEBUGLEVEL'] >= 5:
+      logging.debug("*** parse_Mailbox *** start ***")
+   
+   Status, Messages = MB.select()
+   
+   if Status != "OK":
+      logging.critical("Select to INBOX delivers NOT OK - Terminating")
+      exit(-1)
+   
+   logging.info("Got: "+str(Messages)+ "Messages")
+
+   for I in range(int(Messages[0])):
+      print(I)
+   
+   if params['DEBUGLEVEL'] >= 5:
+      logging.debug("--- parse_Mailbox --- end ---")   
    
 
 
@@ -53,7 +68,7 @@ if __name__ == '__main__':
       
    # DEBUGLEVEL finden
    try:
-      params['DEBUGLEVEL'] = pyiMapConfig['Default']['Debuglevel']
+      params['DEBUGLEVEL'] = int(pyiMapConfig['Default']['Debuglevel'])
    except:
       print("Default -> Loglevel nicht erkennbar")
       exit(-1)
@@ -68,7 +83,7 @@ if __name__ == '__main__':
    logging.basicConfig(filename=".\\"+params['LogFile'], level=logging.DEBUG, format='%(asctime)s - %(message)s')
    
    logging.info("Programm startet")
-   logging.info("Loglevel: "+params['DEBUGLEVEL'])
+   logging.info("Loglevel: "+str(params['DEBUGLEVEL']))
    
    try:
       params['IMAPServer'] = pyiMapConfig['imap']['server']
@@ -77,7 +92,7 @@ if __name__ == '__main__':
       exit(-1)
 
    try:
-      params['IMAPPort'] = pyiMapConfig['imap']['port']
+      params['IMAPPort'] = int(pyiMapConfig['imap']['port'])
    except:
       print("imap -> port nicht gesetzt")
       exit(-1)
@@ -89,6 +104,21 @@ if __name__ == '__main__':
    
    print(args.password)
    print(args.user)
-   #connect2IMAP()
-      
+
+   if params['DEBUGLEVEL'] >= 5:
+      logging.debug("Establish IMAP Connection to Server")
+   MailServer = imaplib.IMAP4(host=params['IMAPServer'],port=params['IMAPPort'])
+   
+   MailServer.login(args.user, args.password)
+   
+   parse_Mailbox(MailServer) 
+   
+   if params['DEBUGLEVEL'] >= 5:
+      logging.debug("Closing IMAP Connection to Mailbox")
+   MailServer.close()
+   
+   if params['DEBUGLEVEL'] >= 5:
+      logging.debug("Logout from IMAP-Server")   
+   MailServer.logout()
+   
    logging.info("Programm ended")
