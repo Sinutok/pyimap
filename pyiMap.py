@@ -24,26 +24,43 @@ params['DEBUGLEVEL']:int   = 0
 params['LogFile']:str      = ""
 params['IMAPServer']:str   = ""
 params['IMAPPort']:int     = 0
+params['ManageUser']:str   = ""
+params['ManagePass']:str   = ""
 
 # ################################
-# connect2imap
+# parse_Mailbox
 # 
-# Stellt die Verbindung zum IMAP-Server her
+# Durchsucht die Mailbox
 #
+# Parameter: MB - Das Mailbox-Handle
 def parse_Mailbox(MB):
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("*** parse_Mailbox *** start ***")
    
-   Status, Messages = MB.select()
+   Status, Messages = MB.select("inbox")
    
    if Status != "OK":
       logging.critical("Select to INBOX delivers NOT OK - Terminating")
       exit(-1)
    
    logging.info("Got: "+str(Messages)+ "Messages")
+   
+   logging.info("Starting Message Search")
+   result, Message = MB.search(None,'ALL')
 
+   if params['DEBUGLEVEL'] >= 5:
+      logging.debug("RESULT:" +result)
+      logging.debug("Messages: "+str(Message[0]))
+   
+   exit()
+   
+   # wir arbeiten nun durch die Mailbox
    for I in range(int(Messages[0])):
+      # Jetzt "zerpfluecken wir die emails"
       print(I)
+      result, msgBody = MB.fetch(bytes(I), '(RFC822)')
+      print("result: "+result)
+      print("msg: "+msgBody)
    
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("--- parse_Mailbox --- end ---")   
@@ -97,20 +114,26 @@ if __name__ == '__main__':
       print("imap -> port nicht gesetzt")
       exit(-1)
     
+   # Argumente Parsen
    parser = argparse.ArgumentParser()
    parser.add_argument("user",help="Username fuer imap")
    parser.add_argument("password",help="Password fuer imap-User")
    args = parser.parse_args()
    
+   print("Das ist gefaelligst nur temporaer!!")
    print(args.password)
    print(args.user)
 
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("Establish IMAP Connection to Server")
+   
+   # Verbindung zum IMAP aufbauen
    MailServer = imaplib.IMAP4(host=params['IMAPServer'],port=params['IMAPPort'])
    
+   # Login in IMAP
    MailServer.login(args.user, args.password)
    
+   # Mailbox parsen :-)
    parse_Mailbox(MailServer) 
    
    if params['DEBUGLEVEL'] >= 5:
