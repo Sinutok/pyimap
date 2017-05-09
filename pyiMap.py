@@ -18,7 +18,9 @@ import configparser              # Damit mit einer INI gearbeitet werden kann
 import logging                   # LOG-Mechanismus
 import argparse                  # Argumente zur Uebergabe
 import imaplib                   # imap-Zeugs
+import email                     # Email-Handling
 
+import pprint
 
 params['DEBUGLEVEL']:int   = 0
 params['LogFile']:str      = ""
@@ -26,6 +28,18 @@ params['IMAPServer']:str   = ""
 params['IMAPPort']:int     = 0
 params['ManageUser']:str   = ""
 params['ManagePass']:str   = ""
+
+def AnalyseMail(die_email):
+   if params['DEBUGLEVEL'] >= 5:
+      logging.debug("*** AnalyseMail *** start ***")
+   pprint.pprint(die_email[1])
+   email_message = email.message_from_string(die_email[1].decode("utf-8"))
+   print(email_message['To'])
+   
+   
+   if params['DEBUGLEVEL'] >= 5:
+      logging.debug("=== parse_Mailbox === start ===")
+   
 
 # ################################
 # parse_Mailbox
@@ -46,7 +60,8 @@ def parse_Mailbox(MB):
    logging.info("Got: "+str(Messages)+ "Messages")
    
    logging.info("Starting Message Search")
-   result, Message = MB.search(None,'ALL')
+   #Message-ID als Basis nicht die Nummer, die ID bleibt gleich
+   result, Message = MB.uid('search',None, "ALL")
    
    # In Message ist jetzt ein String mit allen Nummern die zutreffend sind durch Space getrennt
 
@@ -59,11 +74,16 @@ def parse_Mailbox(MB):
    MessageNumbers = list(map(int, Message[0].split()))
    
    print(MessageNumbers)
+   
    for I in MessageNumbers:
       # Aus dem Interger ein Byte machen....och wie war Py2 einfach
       erg = str(I).encode()
+      result, msgBody = MB.fetch(erg,'(RFC822)')
+      if result == "OK":
+         AnalyseMail(msgBody[0])      
+   
+   exit()
       
-   exit()   
    
    
    
