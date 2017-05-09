@@ -47,12 +47,32 @@ def parse_Mailbox(MB):
    
    logging.info("Starting Message Search")
    result, Message = MB.search(None,'ALL')
+   
+   # In Message ist jetzt ein String mit allen Nummern die zutreffend sind durch Space getrennt
 
+   
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("RESULT:" +result)
       logging.debug("Messages: "+str(Message[0]))
+      
+   # Daraus machen wir jetzt eine Liste von "Nummern"   
+   MessageNumbers = list(map(int, Message[0].split()))
    
-   exit()
+   print(MessageNumbers)
+   for I in MessageNumbers:
+      # Aus dem Interger ein Byte machen....och wie war Py2 einfach
+      erg = str(I).encode()
+      
+   exit()   
+   
+   
+   
+   for I in MessageNumbers:
+      result, msgBody = MB.fetch(I,'(RFC822)')
+      print("result: "+result)
+      print("msg: "+msgBody)
+
+   
    
    # wir arbeiten nun durch die Mailbox
    for I in range(int(Messages[0])):
