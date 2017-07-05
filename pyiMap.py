@@ -28,7 +28,8 @@ params['IMAPServer']:str   = ""
 params['IMAPPort']:int     = 0
 params['ManageUser']:str   = ""
 params['ManagePass']:str   = ""
-params['FolderStruct']     = {}
+params['FolderWildCardNum']:int = 0
+params['FolderWildCard']   = {}
 
 # ################################
 # AnalyseMail
@@ -161,7 +162,7 @@ if __name__ == '__main__':
    
    pyiMapConfig.read("./pyiMap.ini")            # Ini-File einlesen
    
-   # Checken ob es ein Defaul gibt
+   # Checken ob es ein Default gibt
    if 'Default' not in pyiMapConfig:
       print("[Default]-Sektion in ini fehlt, oder INI-File unlesbar!")
       exit(-1)
@@ -197,7 +198,19 @@ if __name__ == '__main__':
       print("imap -> port nicht gesetzt")
       exit(-1)
     
-   
+   for I in range(1,params['FolderWildCardNum']+1):
+      try:
+         params['FolderWildCard'][int(I)] = pyiMapConfig['folderwildcard'][str(I)]
+      except:
+         print("FolderWildCard: "+str(I)+ " nicht lesbar")
+         exit(-1)
+      
+   print(len(pyiMapConfig['folderwildcard']))
+   pprint.pprint(params)
+      
+   exit()
+      
+   pprint.pprint(params)
    # Argumente Parsen
    parser = argparse.ArgumentParser()
    parser.add_argument("user",help="Username fuer imap")
