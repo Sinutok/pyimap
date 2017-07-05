@@ -28,19 +28,46 @@ params['IMAPServer']:str   = ""
 params['IMAPPort']:int     = 0
 params['ManageUser']:str   = ""
 params['ManagePass']:str   = ""
+params['FolderStruct']     = {}
 
-def AnalyseMail(die_email):
+# ################################
+# AnalyseMail
+#
+# Liefert den TO zurueck
+#
+# Parameter:
+# der_Header - Subject, From,To in Tuple
+#
+# Return:
+# To
+def AnalyseMail(der_Header):
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("*** AnalyseMail *** start ***")
-   pprint.pprint(die_email[1])
-   email_message = email.message_from_string(die_email[1].decode("utf-8"))
-   print(email_message['To'])
+   pprint.pprint(der_Header[1])
+   email_message = email.message_from_string(der_Header[1].decode("utf-8"))
+   logging.info("Found Mail-To: " + email_message['To'])
+      
+   if params['DEBUGLEVEL'] >= 5:
+      logging.debug("=== AnalyseMail === END ===")
    
+   return email_message['To']
+
+# ################################
+# DetermineMailFolder
+#
+# Macht aus dem TO: die Ordner-Notation
+#
+# Parameter: zu_wem - Der TO
+def DetermineMailFolder(zu_wem):
+   if params['DEBUGLEVEL'] >= 5:
+      logging.debug("*** DetermineMailFolder *** start ***")
+
+   # Die Mailfolder sind mit _ gemacht
+   tmp_list = zu_wem.split('@')
    
    if params['DEBUGLEVEL'] >= 5:
-      logging.debug("=== parse_Mailbox === start ===")
+      logging.debug("=== DetermineMailFolder === END ===")
    
-
 # ################################
 # parse_Mailbox
 # 
@@ -65,7 +92,6 @@ def parse_Mailbox(MB):
    
    # In Message ist jetzt ein String mit allen Nummern die zutreffend sind durch Space getrennt
 
-   
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("RESULT:" +result)
       logging.debug("Messages: "+str(Message[0]))
@@ -74,6 +100,23 @@ def parse_Mailbox(MB):
    MessageNumbers = list(map(int, Message[0].split()))
    
    print(MessageNumbers)
+   
+   # Hier der Test nur den To, Subject + From zu pollen, warum auch die ganze Nachricht
+   
+   for I in MessageNumbers:
+      erg = str(I).encode() # Int to Byte
+      result, headerPart = MB.fetch(erg,'(BODY[HEADER.FIELDS (SUBJECT FROM TO)])')
+      if result == "OK":
+         Empfaenger = AnalyseMail(headerPart[0])
+      else:
+         logger.error("* ERROR MB Fetch des Headers brachte Error: "+ str(result))
+         logger.error("** MessageID: "+ str(I))
+         exit()       
+      
+      # Wir haben jetzt zu wem es geht, damit kann man den Ordner finden bzw. bauen.
+      DetermineMailFolder(Empfaenger)
+      
+   exit()
    
    for I in MessageNumbers:
       # Aus dem Interger ein Byte machen....och wie war Py2 einfach
@@ -154,6 +197,7 @@ if __name__ == '__main__':
       print("imap -> port nicht gesetzt")
       exit(-1)
     
+   
    # Argumente Parsen
    parser = argparse.ArgumentParser()
    parser.add_argument("user",help="Username fuer imap")
