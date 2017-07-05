@@ -28,8 +28,7 @@ params['IMAPServer']:str   = ""
 params['IMAPPort']:int     = 0
 params['ManageUser']:str   = ""
 params['ManagePass']:str   = ""
-params['FolderWildCardNum']:int = 0
-params['FolderWildCard']   = {}
+params['Mail2FolderMapping']   = {}
 
 # ################################
 # AnalyseMail
@@ -197,13 +196,21 @@ if __name__ == '__main__':
    except:
       print("imap -> port nicht gesetzt")
       exit(-1)
-    
-   for I in range(1,params['FolderWildCardNum']+1):
-      try:
-         params['FolderWildCard'][int(I)] = pyiMapConfig['folderwildcard'][str(I)]
-      except:
-         print("FolderWildCard: "+str(I)+ " nicht lesbar")
-         exit(-1)
+   
+   # Jetzt starten wird das Mail2FolderMapping
+   # Sicher man koennte mehr Logik in die App legen,
+   # aber es soll ja erstmal irdgendwann fertig werden
+   
+   for I in range(1,len(pyiMapConfig['folders'])+1):
+      print(pyiMapConfig['folders'][str(I)])
+      tmp_sectName = pyiMapConfig['folders'][str(I)]
+      for J in range(1,len(pyiMapConfig[tmp_sectName])+1):
+         print(pyiMapConfig[tmp_sectName][str(J)])
+      #try:
+         #params['Mail2FolderMapping'][pyiMapConfig['folders'][str(I)]] = 
+      #except:
+         #print("FolderWildCard: "+str(I)+ " nicht lesbar")
+         #exit(-1)
       
    print(len(pyiMapConfig['folderwildcard']))
    pprint.pprint(params)
