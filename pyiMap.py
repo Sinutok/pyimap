@@ -23,6 +23,7 @@ import email                     # Email-Handling
 import pprint
 
 params['DEBUGLEVEL']:int   = 0
+params['Delimiter']:str    = ""
 params['LogFile']:str      = ""
 params['IMAPServer']:str   = ""
 params['IMAPPort']:int     = 0
@@ -185,6 +186,13 @@ if __name__ == '__main__':
    logging.info("Programm startet")
    logging.info("Loglevel: "+str(params['DEBUGLEVEL']))
    
+   #IMAP DELIMITER
+   try:
+      params['delimiter'] = pyiMapConfig['Default']['delimiter']
+   except:
+      print("Default -> Delimiter nicht gesetzt")
+      exit(-1)
+      
    try:
       params['IMAPServer'] = pyiMapConfig['imap']['server']
    except:
@@ -204,15 +212,22 @@ if __name__ == '__main__':
    for I in range(1,len(pyiMapConfig['folders'])+1):
       print(pyiMapConfig['folders'][str(I)])
       tmp_sectName = pyiMapConfig['folders'][str(I)]
-      for J in range(1,len(pyiMapConfig[tmp_sectName])+1):
+      for J in pyiMapConfig[tmp_sectName]:
          print(pyiMapConfig[tmp_sectName][str(J)])
+         print(params['Mail2FolderMapping'])
+         if tmp_sectName not in params['Mail2FolderMapping']:
+            params['Mail2FolderMapping'][tmp_sectName] = [pyiMapConfig[tmp_sectName][str(J)]]
+         else:
+            params['Mail2FolderMapping'][tmp_sectName].append(pyiMapConfig[tmp_sectName][str(J)])
+                                          
+                                              
       #try:
          #params['Mail2FolderMapping'][pyiMapConfig['folders'][str(I)]] = 
       #except:
          #print("FolderWildCard: "+str(I)+ " nicht lesbar")
          #exit(-1)
       
-   print(len(pyiMapConfig['folderwildcard']))
+   #print(len(pyiMapConfig['folderwildcard']))
    pprint.pprint(params)
       
    exit()
