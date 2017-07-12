@@ -210,15 +210,13 @@ if __name__ == '__main__':
    # aber es soll ja erstmal irdgendwann fertig werden
    
    for I in range(1,len(pyiMapConfig['folders'])+1):
-      print(pyiMapConfig['folders'][str(I)])
       tmp_sectName = pyiMapConfig['folders'][str(I)]
+      
       for J in pyiMapConfig[tmp_sectName]:
-         print(pyiMapConfig[tmp_sectName][str(J)])
-         print(params['Mail2FolderMapping'])
          if tmp_sectName not in params['Mail2FolderMapping']:
-            params['Mail2FolderMapping'][tmp_sectName] = [pyiMapConfig[tmp_sectName][str(J)]]
+            params['Mail2FolderMapping'][J] = [pyiMapConfig[tmp_sectName][str(J)]]
          else:
-            params['Mail2FolderMapping'][tmp_sectName].append(pyiMapConfig[tmp_sectName][str(J)])
+            params['Mail2FolderMapping'][J].append(pyiMapConfig[tmp_sectName][str(J)])
                                           
                                               
       #try:
@@ -229,7 +227,6 @@ if __name__ == '__main__':
       
    #print(len(pyiMapConfig['folderwildcard']))
    pprint.pprint(params)
-      
    exit()
       
    pprint.pprint(params)
