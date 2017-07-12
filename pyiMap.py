@@ -29,7 +29,7 @@ params['IMAPServer']:str   = ""
 params['IMAPPort']:int     = 0
 params['ManageUser']:str   = ""
 params['ManagePass']:str   = ""
-params['Mail2FolderMapping']   = {}
+params['Mail2FolderMapping']   = {} # EmailAddresse:['Ordner']
 
 # ################################
 # AnalyseMail
@@ -54,20 +54,28 @@ def AnalyseMail(der_Header):
    return email_message['To']
 
 # ################################
-# DetermineMailFolder
+# MoveMessage
 #
-# Macht aus dem TO: die Ordner-Notation
+# Verschiebt die Message in den richtigen Ordner
 #
-# Parameter: zu_wem - Der TO
-def DetermineMailFolder(zu_wem):
+# Parameter: Empfaenger - An wen die Message ging
+def MoveMessage(MB,zu_wem, nachrichtennummer):
    if params['DEBUGLEVEL'] >= 5:
-      logging.debug("*** DetermineMailFolder *** start ***")
-
-   # Die Mailfolder sind mit _ gemacht
-   tmp_list = zu_wem.split('@')
+      logging.debug("*** MoveMessage *** start ***")
+      
+   zielordner = params['Mail2FolderMapping'][zu_wem]
+   print(zu_wem)
+   print(zielordner)
+   
+   for I in zielordner:
+      if params['DEBUGLEVEL'] >= 5:
+         logging.debug("Nachrichtennumer: "+str(nachrichtennummer))
+         logging.debug("Zielordner: "+ str(I))
+      #MB.copy(nachrichtennummer, str(I))
+      print(MB)
    
    if params['DEBUGLEVEL'] >= 5:
-      logging.debug("=== DetermineMailFolder === END ===")
+      logging.debug("=== MoveMessage === END ===")
    
 # ################################
 # parse_Mailbox
@@ -100,6 +108,7 @@ def parse_Mailbox(MB):
    # Daraus machen wir jetzt eine Liste von "Nummern"   
    MessageNumbers = list(map(int, Message[0].split()))
    
+   print("MessageNumbers")
    print(MessageNumbers)
    
    # Hier der Test nur den To, Subject + From zu pollen, warum auch die ganze Nachricht
@@ -114,8 +123,9 @@ def parse_Mailbox(MB):
          logger.error("** MessageID: "+ str(I))
          exit()       
       
-      # Wir haben jetzt zu wem es geht, damit kann man den Ordner finden bzw. bauen.
-      DetermineMailFolder(Empfaenger)
+      # Jetzt muss sie verschoben werden, das kann nach dem Result, weil das ist ja ok, sonst
+      # waere es vorher ausgestiegen.
+      MoveMessage(MB,Empfaenger, I)
       
    exit()
    
@@ -217,19 +227,7 @@ if __name__ == '__main__':
             params['Mail2FolderMapping'][J] = [pyiMapConfig[tmp_sectName][str(J)]]
          else:
             params['Mail2FolderMapping'][J].append(pyiMapConfig[tmp_sectName][str(J)])
-                                          
-                                              
-      #try:
-         #params['Mail2FolderMapping'][pyiMapConfig['folders'][str(I)]] = 
-      #except:
-         #print("FolderWildCard: "+str(I)+ " nicht lesbar")
-         #exit(-1)
-      
-   #print(len(pyiMapConfig['folderwildcard']))
-   pprint.pprint(params)
-   exit()
-      
-   pprint.pprint(params)
+   
    # Argumente Parsen
    parser = argparse.ArgumentParser()
    parser.add_argument("user",help="Username fuer imap")
