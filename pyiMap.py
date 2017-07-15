@@ -78,35 +78,31 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
       # Checken ob Ordner vorhanden
       pprint.pprint(data)
       print(str(I))
+      ordnerfound = False
       for J in data:
          print("J: " + str(J))
          if str(I) in str(J):
-            print("FOUND")
-      exit(-1)
-      vorhanden = [ s for s in data if J in s] 
-      print(vorhanden)
-      if len(vorhanden) != 0:
-         print("nich vorhanden erstellen")
-      else:
-         print("DA")
-      exit(-1)
-      if str(I).encode() not in MB.list():
-         if params['DEBUGLEVEL'] >= 5:
-            logging.debug(str(I)+" Not In MB.list() - creating")
-         # Da der ORdner nicht da ist, wird er erstellt
+            ordnerfound = True
+         if ordnerfound == True:
+            break
+      
+      if ordnerfound == False:
+         logging.info("Ordner: " + str(I) + " nicht gefunden, wird erstellt")
          result, data = MB.create(str(I))
+         print(data)
          if result == 'OK':
-            logging.info("IMAP-Folder: "+str(I)+" "+''.join(data))
+            logging.info("IMAP-Folder created: "+ str(I) +" " + str(b' '.join(data)))
          else:
             logging.error("Erstellung IMAP-Folder: "+str(I)+" fehlgeschlagen!! EXIT!!")
             logging.error("Nachrichtennummer: "+str(nachrichtennummer).encode())
             exit(-1)
+            
       # Wenn er bis jetzt nicht ausgestiegen ist, dann  ist wohl alles oke
       # also kopieren
-      result, data = MB.copy(str(nachrichtennummer).encode(), '<'+str(I)+'>')
+      result, data = MB.copy(str(nachrichtennummer).encode(),str(I))
       
       if result == 'NO':
-         print("Copy war nix: "+''.join(data))
+         print("Copy war nix: "+str(b' '.join(data)))
          exit(-1)
          # Copy hat nicht geklappt
       if params['DEBUGLEVEL'] >= 5:
