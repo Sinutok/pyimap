@@ -19,6 +19,7 @@ import logging                   # LOG-Mechanismus
 import argparse                  # Argumente zur Uebergabe
 import imaplib                   # imap-Zeugs
 import email                     # Email-Handling
+import email.header              # Email-Header-Zeugs
 
 import pprint
 
@@ -62,6 +63,7 @@ def AnalyseMail(der_Header):
 def MoveMessage(MB,zu_wem, nachrichtennummer):
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("*** MoveMessage *** start ***")
+      logging.debug("zu_wem: " + str(zu_wem))
       
    zielordner = params['Mail2FolderMapping'][zu_wem]
    
@@ -76,8 +78,6 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
       # Result von MB.list war oke, ergo weiter
          
       # Checken ob Ordner vorhanden
-      pprint.pprint(data)
-      print(str(I))
       ordnerfound = False
       for J in data:
          print("J: " + str(J))
@@ -108,26 +108,26 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
          logging.debug("MB.copy() Result: "+str(result))
          
       ## Sie wurde kopiert also zum loeschen vorbereiten
-      #result, data = MB.store(str(nachrichtennummer).encode(),'+FLAGS','\\Deleted')
-      #if result != 'OK':
-         #print("Store-Deleted war nix")
-         #print(result)
-         #print(data)
-         #exit(-1)
-      #else:
-         #logging.info("Delete-Flag on: "+str(nachrichtennummer))
-      #if params['DEBUGLEVEL'] >= 5:
-         #logging.debug("MB.store - Flags Deleted: "+str(result))
+      result, data = MB.store(str(nachrichtennummer).encode(),'+FLAGS','\\Deleted')
+      if result != 'OK':
+         print("Store-Deleted war nix")
+         print(result)
+         print(data)
+         exit(-1)
+      else:
+         logging.info("Delete-Flag on: "+str(nachrichtennummer))
+      if params['DEBUGLEVEL'] >= 5:
+         logging.debug("MB.store - Flags Deleted: "+str(result))
       
-      ## Jetzt wird sie geloescht
-      #result, data = MB.expunge()
-      #if result != 'OK':
-         #print("Expunge ging nicht!")
-         #print(result)
-         #print(data)
-         #exit(-1)
-      #else:
-         #logging.info("Expunge erfolgreich fuer: "+str(nachrichtennummer))
+      # Jetzt wird sie geloescht
+      result, data = MB.expunge()
+      if result != 'OK':
+         print("Expunge ging nicht!")
+         print(result)
+         print(data)
+         exit(-1)
+      else:
+         logging.info("Expunge erfolgreich fuer: "+str(nachrichtennummer))
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("=== MoveMessage === END ===")
    
@@ -169,15 +169,22 @@ def parse_Mailbox(MB):
    
    for I in MessageNumbers:
       erg = str(I).encode() # Int to Byte
-      result, headerPart = MB.fetch(erg,'(BODY[HEADER.FIELDS (SUBJECT FROM TO)])')
-      print(result)
-      print(headerPart)
+      result, data = MB.uid('fetch', erg, '(RFC822)')
+      if data == None:
+         print("DATA NONE! MessageNumber: "+str(I))
+         logging.critical("No Data at fetch! MessageNumber: "+ str(I))
+         exit(-1)
+      
       if params['DEBUGLEVEL'] >= 5:
          logging.debug("Messagenummer: "+ str(I))
          logging.debug("Result: "+result)
-         logging.debug("headerPart: " + str(b','.join(headerPart)))
+         print(data)
+         #logging.debug("headerPart: " + str(b','.join(headerPart)))
       if result == "OK":
-         Empfaenger = AnalyseMail(headerPart[0])
+         #Empfaenger = AnalyseMail(headerPart[0])
+         email_message = email.message_from_bytes(data[0][1])
+         hdr = email.header.make_header(email.header.decode_header(email_message['To']))
+         print("HDR: "+ str(hdr))
       else:
          logger.error("* ERROR MB Fetch des Headers brachte Error: "+ str(result))
          logger.error("** MessageID: "+ str(I))
@@ -185,38 +192,8 @@ def parse_Mailbox(MB):
       
       # Jetzt muss sie verschoben werden, das kann nach dem Result, weil das ist ja ok, sonst
       # waere es vorher ausgestiegen.
-      MoveMessage(MB,Empfaenger, I)
+      MoveMessage(MB,str(hdr), I)
       
-   exit()
-   
-   for I in MessageNumbers:
-      # Aus dem Interger ein Byte machen....och wie war Py2 einfach
-      erg = str(I).encode()
-      result, msgBody = MB.fetch(erg,'(RFC822)')
-      if result == "OK":
-         AnalyseMail(msgBody[0])      
-   
-   exit()
-      
-   
-   
-   
-   for I in MessageNumbers:
-      result, msgBody = MB.fetch(I,'(RFC822)')
-      print("result: "+result)
-      print("msg: "+msgBody)
-      
-      
-   
-   
-   # wir arbeiten nun durch die Mailbox
-   for I in range(int(Messages[0])):
-      # Jetzt "zerpfluecken wir die emails"
-      print(I)
-      result, msgBody = MB.fetch(bytes(I), '(RFC822)')
-      print("result: "+result)
-      print("msg: "+msgBody)
-   
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("--- parse_Mailbox --- end ---")   
    
