@@ -99,15 +99,35 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
             
       # Wenn er bis jetzt nicht ausgestiegen ist, dann  ist wohl alles oke
       # also kopieren
-      result, data = MB.copy(str(nachrichtennummer).encode(),str(I))
-      
+      result, data = MB.copy(str(nachrichtennummer).encode(),str(I))    
       if result == 'NO':
          print("Copy war nix: "+str(b' '.join(data)))
          exit(-1)
          # Copy hat nicht geklappt
       if params['DEBUGLEVEL'] >= 5:
          logging.debug("MB.copy() Result: "+str(result))
-   exit(-1)
+         
+      ## Sie wurde kopiert also zum loeschen vorbereiten
+      #result, data = MB.store(str(nachrichtennummer).encode(),'+FLAGS','\\Deleted')
+      #if result != 'OK':
+         #print("Store-Deleted war nix")
+         #print(result)
+         #print(data)
+         #exit(-1)
+      #else:
+         #logging.info("Delete-Flag on: "+str(nachrichtennummer))
+      #if params['DEBUGLEVEL'] >= 5:
+         #logging.debug("MB.store - Flags Deleted: "+str(result))
+      
+      ## Jetzt wird sie geloescht
+      #result, data = MB.expunge()
+      #if result != 'OK':
+         #print("Expunge ging nicht!")
+         #print(result)
+         #print(data)
+         #exit(-1)
+      #else:
+         #logging.info("Expunge erfolgreich fuer: "+str(nachrichtennummer))
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("=== MoveMessage === END ===")
    
@@ -150,6 +170,12 @@ def parse_Mailbox(MB):
    for I in MessageNumbers:
       erg = str(I).encode() # Int to Byte
       result, headerPart = MB.fetch(erg,'(BODY[HEADER.FIELDS (SUBJECT FROM TO)])')
+      print(result)
+      print(headerPart)
+      if params['DEBUGLEVEL'] >= 5:
+         logging.debug("Messagenummer: "+ str(I))
+         logging.debug("Result: "+result)
+         logging.debug("headerPart: " + str(b','.join(headerPart)))
       if result == "OK":
          Empfaenger = AnalyseMail(headerPart[0])
       else:
