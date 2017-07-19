@@ -67,19 +67,20 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
       
    zielordner = params['Mail2FolderMapping'][zu_wem]
    
+   alleordnervorhanden = True
+   # ALLE Ordner holen
+   result,alleordner = MB.list()
+   if result != "OK":
+      logging.critical("MB.LIST fehlgeschlagen, EXIT")
+      exit(-1)
+   # Result von MB.list war oke, ergo weiter
    for I in zielordner:
       if params['DEBUGLEVEL'] >= 5:
          logging.debug("Nachrichtennumer: "+str(nachrichtennummer))
          logging.debug("Zielordner: "+ str(I))
-      result,data = MB.list()
-      if result != "OK":
-         logging.critical("MB.LIST fehlgeschlagen, EXIT")
-         exit(-1)
-      # Result von MB.list war oke, ergo weiter
-         
       # Checken ob Ordner vorhanden
       ordnerfound = False
-      for J in data:
+      for J in alleordner:
          print("J: " + str(J))
          if str(I) in str(J):
             ordnerfound = True
@@ -89,6 +90,7 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
       if ordnerfound == False:
          logging.info("Ordner: " + str(I) + " nicht gefunden, wird erstellt")
          result, data = MB.create(str(I))
+         alleordnervorhanden = False
          print(data)
          if result == 'OK':
             logging.info("IMAP-Folder created: "+ str(I) +" " + str(b' '.join(data)))
@@ -96,9 +98,18 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
             logging.error("Erstellung IMAP-Folder: "+str(I)+" fehlgeschlagen!! EXIT!!")
             logging.error("Nachrichtennummer: "+str(nachrichtennummer).encode())
             exit(-1)
-            
-      # Wenn er bis jetzt nicht ausgestiegen ist, dann  ist wohl alles oke
-      # also kopieren
+   
+   if alleordnervorhanden == False:
+      # Es wurde ein neuer Ordner erstellt, also nochmals einlesen
+      result,alleordner = MB.list()
+      if result != "OK":
+         logging.critical("2. MB.LIST fehlgeschlagen, EXIT")
+         exit(-1)
+      # Result von MB.list war oke, ergo weiter
+      
+   # Wenn er bis jetzt nicht ausgestiegen ist, dann  ist wohl alles oke
+   # also kopieren
+   for I in zielordner:
       result, data = MB.copy(str(nachrichtennummer).encode(),str(I))    
       if result == 'NO':
          print("Copy war nix: "+str(b' '.join(data)))
@@ -108,7 +119,9 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
          logging.debug("MB.copy() Result: "+str(result))
          
       ## Sie wurde kopiert also zum loeschen vorbereiten
-      result, data = MB.store(str(nachrichtennummer).encode(),'+FLAGS','\\Deleted')
+      print(nachrichtennummer)
+      #result, data = MB.store(str(nachrichtennummer).encode(),'+FLAGS','\Deleted')
+      #result, data = MB.store(,'+FLAGS','\\Deleted')
       if result != 'OK':
          print("Store-Deleted war nix")
          print(result)
@@ -117,17 +130,23 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
       else:
          logging.info("Delete-Flag on: "+str(nachrichtennummer))
       if params['DEBUGLEVEL'] >= 5:
+         print("STORe")
+         print(data)
+         print(result)
          logging.debug("MB.store - Flags Deleted: "+str(result))
       
-      # Jetzt wird sie geloescht
-      result, data = MB.expunge()
-      if result != 'OK':
-         print("Expunge ging nicht!")
-         print(result)
-         print(data)
-         exit(-1)
-      else:
-         logging.info("Expunge erfolgreich fuer: "+str(nachrichtennummer))
+      #### ERSTMAL HIERNACH ALLES WEG, DELETED WIRD NICHT GESETZT
+      ## Jetzt wird sie geloescht
+      #result, data = MB.expunge()
+      #if result != 'OK':
+         #print("Expunge ging nicht!")
+         #print(result)
+         #print(data)
+         #exit(-1)
+      #else:
+         #print("Expunge")
+         #print(data)
+         #logging.info("Expunge erfolgreich fuer: "+str(nachrichtennummer))
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("=== MoveMessage === END ===")
    
@@ -141,8 +160,8 @@ def parse_Mailbox(MB):
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("*** parse_Mailbox *** start ***")
    
+   #Status, Messages = MB.select("INBOX")
    Status, Messages = MB.select("inbox")
-   
    if Status != "OK":
       logging.critical("Select to INBOX delivers NOT OK - Terminating")
       exit(-1)
@@ -162,11 +181,12 @@ def parse_Mailbox(MB):
    # Daraus machen wir jetzt eine Liste von "Nummern"   
    MessageNumbers = list(map(int, Message[0].split()))
    
+   print(Message[0].split())
+   
    print("MessageNumbers")
    print(MessageNumbers)
-   
    # Hier der Test nur den To, Subject + From zu pollen, warum auch die ganze Nachricht
-   
+   exit(-1)
    for I in MessageNumbers:
       erg = str(I).encode() # Int to Byte
       result, data = MB.uid('fetch', erg, '(RFC822)')
@@ -231,7 +251,7 @@ if __name__ == '__main__':
    
    logging.basicConfig(filename=".\\"+params['LogFile'], level=logging.DEBUG, format='%(asctime)s - %(message)s')
    
-   logging.info("Programm startet")
+   logging.info("*=*=*=*=*=*=*=* Programm startet *=*=*=*=*=*=*=*=*")
    logging.info("Loglevel: "+str(params['DEBUGLEVEL']))
    
    #IMAP DELIMITER
