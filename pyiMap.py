@@ -6,6 +6,7 @@
 # Code-Stil-Aenderungen sind wahrscheinlich, schluderei auch.
 #
 # 2017-03-29 - Philospohieren
+# 2017-07-22 - Python 3 kotzt mich an.... somit setze ich es in Py2 um
 #
 
 params = {}    # Mein Repository - Unelegant aber praktisch
@@ -13,8 +14,9 @@ params = {}    # Mein Repository - Unelegant aber praktisch
 
 # IMPORTS
 from time import localtime,strftime
+from PyToolsMG import mg_tool,mg_config
 from sys import argv, exit
-import configparser              # Damit mit einer INI gearbeitet werden kann
+import ConfigParser              # Damit mit einer INI gearbeitet werden kann
 import logging                   # LOG-Mechanismus
 import argparse                  # Argumente zur Uebergabe
 import imaplib                   # imap-Zeugs
@@ -23,13 +25,13 @@ import email.header              # Email-Header-Zeugs
 
 import pprint
 
-params['DEBUGLEVEL']:int   = 0
-params['Delimiter']:str    = ""
-params['LogFile']:str      = ""
-params['IMAPServer']:str   = ""
-params['IMAPPort']:int     = 0
-params['ManageUser']:str   = ""
-params['ManagePass']:str   = ""
+params['DEBUGLEVEL'] = 0
+params['Delimiter'] = ""
+params['LogFile'] = ""
+params['IMAPServer'] = ""
+params['IMAPPort'] = 0
+params['ManageUser'] = ""
+params['ManagePass'] = ""
 params['Mail2FolderMapping']   = {} # EmailAddresse:['Ordner']
 
 # ################################
@@ -120,8 +122,8 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
          
       ## Sie wurde kopiert also zum loeschen vorbereiten
       print(nachrichtennummer)
-      #result, data = MB.store(str(nachrichtennummer).encode(),'+FLAGS','\Deleted')
-      #result, data = MB.store(,'+FLAGS','\\Deleted')
+      result, data = MB.store(str(nachrichtennummer),'+FLAGS','\\Deleted')
+      #result, data = MB.store(nachrichtennummer,'+FLAGS','\\Deleted')
       if result != 'OK':
          print("Store-Deleted war nix")
          print(result)
@@ -181,15 +183,14 @@ def parse_Mailbox(MB):
    # Daraus machen wir jetzt eine Liste von "Nummern"   
    MessageNumbers = list(map(int, Message[0].split()))
    
-   print(Message[0].split())
+   MessageNumbers = Message[0].split()
    
    print("MessageNumbers")
    print(MessageNumbers)
    # Hier der Test nur den To, Subject + From zu pollen, warum auch die ganze Nachricht
-   exit(-1)
    for I in MessageNumbers:
-      erg = str(I).encode() # Int to Byte
-      result, data = MB.uid('fetch', erg, '(RFC822)')
+      #erg = str(I).encode() # Int to Byte
+      result, data = MB.uid('fetch', I, '(RFC822)')
       if data == None:
          print("DATA NONE! MessageNumber: "+str(I))
          logging.critical("No Data at fetch! MessageNumber: "+ str(I))
@@ -226,28 +227,18 @@ def parse_Mailbox(MB):
 if __name__ == '__main__':
    """ Wir sind nicht inportierbar, as ususal """
    
-   pyiMapConfig = configparser.ConfigParser()   # Configparser initialisieren
+   # Configuration
+   configuration = mg_config("pyiMap.ini")
    
-   pyiMapConfig.read("./pyiMap.ini")            # Ini-File einlesen
+   # DEBUG aus config setzen
+   params['DEBUGLEVEL'] = int(configuration.get_values("DEFAULT", "Debuglevel"))
+   if not isinstance(params['DEBUGLEVEL'],int):
+      print "Debug-Wert kein Integer"
+      exit(-1)    
    
-   # Checken ob es ein Default gibt
-   if 'Default' not in pyiMapConfig:
-      print("[Default]-Sektion in ini fehlt, oder INI-File unlesbar!")
-      exit(-1)
-      
-   # DEBUGLEVEL finden
-   try:
-      params['DEBUGLEVEL'] = int(pyiMapConfig['Default']['Debuglevel'])
-   except:
-      print("Default -> Loglevel nicht erkennbar")
-      exit(-1)
-   
-   # Logfilename
-   try:
-      params['LogFile'] = pyiMapConfig['Default']['LogFile']
-   except:
-      print("Default -> Logfile nicht gesetzt")
-      exit(-1)
+   # Log-File aus config setzen
+   params['LogFile'] = configuration.get_values("DEFAULT", "LogFile")
+   #params['logfile'] = LOG+'-'+strftime("%y%m%d-%H%M%S",params['startzeit'])+".log"
    
    logging.basicConfig(filename=".\\"+params['LogFile'], level=logging.DEBUG, format='%(asctime)s - %(message)s')
    
@@ -255,23 +246,16 @@ if __name__ == '__main__':
    logging.info("Loglevel: "+str(params['DEBUGLEVEL']))
    
    #IMAP DELIMITER
-   try:
-      params['delimiter'] = pyiMapConfig['Default']['delimiter']
-   except:
-      print("Default -> Delimiter nicht gesetzt")
+   params['Delimiter'] = str(configuration.get_values("DEFAULT","Delimiter"))
+   if not isinstance(params['Delimiter'],str):
+      print "Delimiter ist nicht gesetzt"
       exit(-1)
       
-   try:
-      params['IMAPServer'] = pyiMapConfig['imap']['server']
-   except:
-      print("imap -> server nicht gesetzt")
-      exit(-1)
-
-   try:
-      params['IMAPPort'] = int(pyiMapConfig['imap']['port'])
-   except:
-      print("imap -> port nicht gesetzt")
-      exit(-1)
+   # IMAP - Server
+   params['IMAPServer'] = configuration.get_values("imap","server")
+   
+   # IMAP - Port
+   params['IMAPPort'] = int(configuration.get_values("imap","port"))
    
    # Jetzt starten wird das Mail2FolderMapping
    # Sicher man koennte mehr Logik in die App legen,
@@ -292,9 +276,9 @@ if __name__ == '__main__':
    parser.add_argument("password",help="Password fuer imap-User")
    args = parser.parse_args()
    
-   print("Das ist gefaelligst nur temporaer!!")
-   print(args.password)
-   print(args.user)
+   print "Das ist gefaelligst nur temporaer!!"
+   print args.password
+   print args.user
 
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("Establish IMAP Connection to Server")
@@ -306,7 +290,7 @@ if __name__ == '__main__':
    MailServer.login(args.user, args.password)
    
    # Mailbox parsen :-)
-   parse_Mailbox(MailServer) 
+   #parse_Mailbox(MailServer) 
    
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("Closing IMAP Connection to Mailbox")
