@@ -27,6 +27,7 @@ import pprint
 
 params['DEBUGLEVEL'] = 0
 params['Delimiter'] = ""
+params['folder'] = []
 params['LogFile'] = ""
 params['IMAPServer'] = ""
 params['IMAPPort'] = 0
@@ -231,13 +232,13 @@ if __name__ == '__main__':
    configuration = mg_config("pyiMap.ini")
    
    # DEBUG aus config setzen
-   params['DEBUGLEVEL'] = int(configuration.get_values("DEFAULT", "Debuglevel"))
+   params['DEBUGLEVEL'] = int(configuration.get_values("Default", "Debuglevel"))
    if not isinstance(params['DEBUGLEVEL'],int):
       print "Debug-Wert kein Integer"
       exit(-1)    
    
    # Log-File aus config setzen
-   params['LogFile'] = configuration.get_values("DEFAULT", "LogFile")
+   params['LogFile'] = configuration.get_values("Default", "LogFile")
    #params['logfile'] = LOG+'-'+strftime("%y%m%d-%H%M%S",params['startzeit'])+".log"
    
    logging.basicConfig(filename=".\\"+params['LogFile'], level=logging.DEBUG, format='%(asctime)s - %(message)s')
@@ -246,7 +247,7 @@ if __name__ == '__main__':
    logging.info("Loglevel: "+str(params['DEBUGLEVEL']))
    
    #IMAP DELIMITER
-   params['Delimiter'] = str(configuration.get_values("DEFAULT","Delimiter"))
+   params['Delimiter'] = str(configuration.get_values("Default","Delimiter"))
    if not isinstance(params['Delimiter'],str):
       print "Delimiter ist nicht gesetzt"
       exit(-1)
@@ -261,15 +262,21 @@ if __name__ == '__main__':
    # Sicher man koennte mehr Logik in die App legen,
    # aber es soll ja erstmal irdgendwann fertig werden
    
-   for I in range(1,len(pyiMapConfig['folders'])+1):
-      tmp_sectName = pyiMapConfig['folders'][str(I)]
+   for I in xrange(1,int(configuration.get_values("folders", "amount"))+1):
+      params['folder'].append(configuration.get_values("folders", str(I)))
       
-      for J in pyiMapConfig[tmp_sectName]:
-         if tmp_sectName not in params['Mail2FolderMapping']:
-            params['Mail2FolderMapping'][J] = [pyiMapConfig[tmp_sectName][str(J)]]
+   for I in params['folder']:
+      print I
+      for J in configuration.get_items(I):
+         print J
+         if J in params['Mail2FolderMapping']:
+            params['Mail2FolderMapping'][J].append(configuration.get_values(I,J))
          else:
-            params['Mail2FolderMapping'][J].append(pyiMapConfig[tmp_sectName][str(J)])
-   
+            params['Mail2FolderMapping'][J] = [configuration.get_values(I,J)]
+
+   pprint.pprint(params)
+   exit(-1)     
+
    # Argumente Parsen
    parser = argparse.ArgumentParser()
    parser.add_argument("user",help="Username fuer imap")
@@ -279,6 +286,9 @@ if __name__ == '__main__':
    print "Das ist gefaelligst nur temporaer!!"
    print args.password
    print args.user
+   
+   pprint.pprint(params)
+   exit(-1)
 
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("Establish IMAP Connection to Server")
