@@ -84,7 +84,7 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
       # Checken ob Ordner vorhanden
       ordnerfound = False
       for J in alleordner:
-         print("J: " + str(J))
+         print "J: " + str(J)
          if str(I) in str(J):
             ordnerfound = True
          if ordnerfound == True:
@@ -94,7 +94,7 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
          logging.info("Ordner: " + str(I) + " nicht gefunden, wird erstellt")
          result, data = MB.create(str(I))
          alleordnervorhanden = False
-         print(data)
+         print data
          if result == 'OK':
             logging.info("IMAP-Folder created: "+ str(I) +" " + str(b' '.join(data)))
          else:
@@ -109,47 +109,48 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
          logging.critical("2. MB.LIST fehlgeschlagen, EXIT")
          exit(-1)
       # Result von MB.list war oke, ergo weiter
-      
+
    # Wenn er bis jetzt nicht ausgestiegen ist, dann  ist wohl alles oke
    # also kopieren
    for I in zielordner:
-      result, data = MB.copy(str(nachrichtennummer).encode(),str(I))    
+      result, data = MB.uid('copy',nachrichtennummer,'"'+str(I)+'"')    
       if result == 'NO':
-         print("Copy war nix: "+str(b' '.join(data)))
+         print "Copy war nix: "+str(b' '.join(data))
          exit(-1)
          # Copy hat nicht geklappt
       if params['DEBUGLEVEL'] >= 5:
          logging.debug("MB.copy() Result: "+str(result))
          
-      ## Sie wurde kopiert also zum loeschen vorbereiten
-      print(nachrichtennummer)
-      result, data = MB.store(str(nachrichtennummer),'+FLAGS','\\Deleted')
-      #result, data = MB.store(nachrichtennummer,'+FLAGS','\\Deleted')
-      if result != 'OK':
-         print("Store-Deleted war nix")
-         print(result)
-         print(data)
-         exit(-1)
-      else:
-         logging.info("Delete-Flag on: "+str(nachrichtennummer))
-      if params['DEBUGLEVEL'] >= 5:
-         print("STORe")
-         print(data)
-         print(result)
-         logging.debug("MB.store - Flags Deleted: "+str(result))
-      
-      #### ERSTMAL HIERNACH ALLES WEG, DELETED WIRD NICHT GESETZT
-      ## Jetzt wird sie geloescht
-      #result, data = MB.expunge()
+      ### Sie wurde kopiert also zum loeschen vorbereiten
+      #print(nachrichtennummer)
+      #result, data = MB.store(str(nachrichtennummer),'+FLAGS','\\Deleted')
+      ##result, data = MB.store(nachrichtennummer,'+FLAGS','\\Deleted')
       #if result != 'OK':
-         #print("Expunge ging nicht!")
+         #print("Store-Deleted war nix")
          #print(result)
          #print(data)
          #exit(-1)
       #else:
-         #print("Expunge")
+         #logging.info("Delete-Flag on: "+str(nachrichtennummer))
+      #if params['DEBUGLEVEL'] >= 5:
+         #print("STORe")
          #print(data)
-         #logging.info("Expunge erfolgreich fuer: "+str(nachrichtennummer))
+         #print(result)
+         #logging.debug("MB.store - Flags Deleted: "+str(result))
+      
+      ##### ERSTMAL HIERNACH ALLES WEG, DELETED WIRD NICHT GESETZT
+      ### Jetzt wird sie geloescht
+      ##result, data = MB.expunge()
+      ##if result != 'OK':
+         ##print("Expunge ging nicht!")
+         ##print(result)
+         ##print(data)
+         ##exit(-1)
+      ##else:
+         ##print("Expunge")
+         ##print(data)
+         ##logging.info("Expunge erfolgreich fuer: "+str(nachrichtennummer))
+         
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("=== MoveMessage === END ===")
    
