@@ -122,34 +122,33 @@ def MoveMessage(MB,zu_wem, nachrichtennummer):
          logging.debug("MB.copy() Result: "+str(result))
          
       ### Sie wurde kopiert also zum loeschen vorbereiten
-      #print(nachrichtennummer)
-      #result, data = MB.store(str(nachrichtennummer),'+FLAGS','\\Deleted')
-      ##result, data = MB.store(nachrichtennummer,'+FLAGS','\\Deleted')
-      #if result != 'OK':
-         #print("Store-Deleted war nix")
-         #print(result)
-         #print(data)
-         #exit(-1)
-      #else:
-         #logging.info("Delete-Flag on: "+str(nachrichtennummer))
-      #if params['DEBUGLEVEL'] >= 5:
-         #print("STORe")
-         #print(data)
-         #print(result)
-         #logging.debug("MB.store - Flags Deleted: "+str(result))
+      result, data = MB.uid('store', nachrichtennummer,'+FLAGS',('\\Deleted'))
+      #result, data = MB.store(nachrichtennummer,'+FLAGS','\\Deleted')
+      if result != 'OK':
+         print("Store-Deleted war nix")
+         print(result)
+         print(data)
+         exit(-1)
+      else:
+         logging.info("Delete-Flag on: "+str(nachrichtennummer))
+      if params['DEBUGLEVEL'] >= 5:
+         print("STORe")
+         print(data)
+         print(result)
+         logging.debug("MB.store - Flags Deleted: "+str(result))
       
-      ##### ERSTMAL HIERNACH ALLES WEG, DELETED WIRD NICHT GESETZT
-      ### Jetzt wird sie geloescht
-      ##result, data = MB.expunge()
-      ##if result != 'OK':
-         ##print("Expunge ging nicht!")
-         ##print(result)
-         ##print(data)
-         ##exit(-1)
-      ##else:
-         ##print("Expunge")
-         ##print(data)
-         ##logging.info("Expunge erfolgreich fuer: "+str(nachrichtennummer))
+      ### ERSTMAL HIERNACH ALLES WEG, DELETED WIRD NICHT GESETZT
+      # Jetzt wird sie geloescht
+      result, data = MB.expunge()
+      if result != 'OK':
+         print("Expunge ging nicht!")
+         print(result)
+         print(data)
+         exit(-1)
+      else:
+         print("Expunge")
+         print(data)
+         logging.info("Expunge erfolgreich fuer: "+str(nachrichtennummer))
          
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("=== MoveMessage === END ===")
