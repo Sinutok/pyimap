@@ -186,27 +186,31 @@ def parse_Mailbox(MB):
    
    MessageNumbers = Message[0].split()
    
-   print("MessageNumbers")
-   print(MessageNumbers)
-   # Hier der Test nur den To, Subject + From zu pollen, warum auch die ganze Nachricht
+   # Message holen
    for I in MessageNumbers:
       #erg = str(I).encode() # Int to Byte
-      result, data = MB.uid('fetch', I, '(RFC822)')
+      result, data = MB.uid('fetch', I, '(BODY.PEEK[HEADER])')
+      #MB.uid('fetch', I, '(RFC822)')
+      
       if data == None:
-         print("DATA NONE! MessageNumber: "+str(I))
+         print "DATA NONE! MessageNumber: "+str(I)
          logging.critical("No Data at fetch! MessageNumber: "+ str(I))
          exit(-1)
       
       if params['DEBUGLEVEL'] >= 5:
          logging.debug("Messagenummer: "+ str(I))
          logging.debug("Result: "+result)
-         print(data)
+         pprint.pprint(data)
          #logging.debug("headerPart: " + str(b','.join(headerPart)))
+      
       if result == "OK":
-         #Empfaenger = AnalyseMail(headerPart[0])
-         email_message = email.message_from_bytes(data[0][1])
-         hdr = email.header.make_header(email.header.decode_header(email_message['To']))
-         print("HDR: "+ str(hdr))
+         Empfaenger = AnalyseMail(data[0])
+         if params['DEBUGLEVEL'] >= 5:
+            logging.debug("Empfaenger: " + Empfaenger)
+         pprint.pprint(Empfaenger)
+         #email_message = email.message_from_bytes(data[0][1])
+         #hdr = email.header.make_header(email.header.decode_header(email_message['To']))
+         #print("HDR: "+ str(hdr))
       else:
          logger.error("* ERROR MB Fetch des Headers brachte Error: "+ str(result))
          logger.error("** MessageID: "+ str(I))
@@ -214,7 +218,8 @@ def parse_Mailbox(MB):
       
       # Jetzt muss sie verschoben werden, das kann nach dem Result, weil das ist ja ok, sonst
       # waere es vorher ausgestiegen.
-      MoveMessage(MB,str(hdr), I)
+      
+      MoveMessage(MB,Empfaenger, I)
       
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("--- parse_Mailbox --- end ---")   
@@ -266,16 +271,11 @@ if __name__ == '__main__':
       params['folder'].append(configuration.get_values("folders", str(I)))
       
    for I in params['folder']:
-      print I
       for J in configuration.get_items(I):
-         print J
          if J in params['Mail2FolderMapping']:
             params['Mail2FolderMapping'][J].append(configuration.get_values(I,J))
          else:
             params['Mail2FolderMapping'][J] = [configuration.get_values(I,J)]
-
-   pprint.pprint(params)
-   exit(-1)     
 
    # Argumente Parsen
    parser = argparse.ArgumentParser()
@@ -286,9 +286,6 @@ if __name__ == '__main__':
    print "Das ist gefaelligst nur temporaer!!"
    print args.password
    print args.user
-   
-   pprint.pprint(params)
-   exit(-1)
 
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("Establish IMAP Connection to Server")
@@ -300,7 +297,7 @@ if __name__ == '__main__':
    MailServer.login(args.user, args.password)
    
    # Mailbox parsen :-)
-   #parse_Mailbox(MailServer) 
+   parse_Mailbox(MailServer) 
    
    if params['DEBUGLEVEL'] >= 5:
       logging.debug("Closing IMAP Connection to Mailbox")
