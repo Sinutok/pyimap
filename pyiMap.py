@@ -7,6 +7,7 @@
 #
 # 2017-03-29 - Philospohieren
 # 2017-07-22 - Python 3 kotzt mich an.... somit setze ich es in Py2 um
+# 2017-08-02 - Aus To-Zweig selbst den Ordner erstellen
 #
 
 params = {}    # Mein Repository - Unelegant aber praktisch
